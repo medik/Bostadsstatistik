@@ -76,13 +76,29 @@ def getSoldObjects(inp):
     return temp
 
 def retrievePrivateKey(filepath):
+    # TODO: Kontroll om denna existerar?
     with open(filepath, 'r') as infile:
         ret = infile.read().strip('\n')
         return ret
 
+def makeStringValid(string):
+    # UGLY
+
+    ret = ""
+    for s in string:
+        if s == " ":
+            ret += "-"
+        else:
+            ret += s
+    return ret
+
+
 def main():
+    print("Skriv in din söksträng:")
     query = input().strip('\n')
-    filename = "booli-såld-" + query + ".json"
+    fileQuery = makeStringValid(query)
+    
+    filename = "booli-såld-" + fileQuery + ".json"
 
     print("Programmet lever! Allt data kommer att sparas till %s" % filename)
     
