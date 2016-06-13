@@ -4,10 +4,8 @@ import math
 import statistics
 
 """
- Detta program städar data och genererar CSV filer
-
- av Olof Sjödin 2016-02-22
- me@olofsjodin.se
+ Detta hack städar data och genererar CSV filer
+ skriven av Olof Sjödin, senast ändrad 2016-02-22
 """
 
 def standardDeviation(listOfNumb):
