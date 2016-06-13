@@ -1,11 +1,14 @@
 """
-BooliToJSON, senast ändrad 2016-05-08
+BooliToJSON
+Skriven av Olof Sjödin, senast ändrad 2016-06-13
 
-Pythonskript som utnyttjar Boolis API för att generera en JSON objekt med
+Pythonhack som utnyttjar Boolis API för att generera en JSON objekt med
 bostadsdata.
 
-Licenserad med 'MIT Licence'. Se bilagan 'LICENCE' för mer information.
+Licenserad med 'MIT Licence'. Se bilagan 'LICENCE' för mer information vad det
+innebär.
 """
+
 from hashlib import sha1
 
 import urllib.request
@@ -15,30 +18,43 @@ import random
 import string
 import json
 
-def getSoldObjects(inp):
+def getJSONFromBooli(inp):
+    # döper om indata..
     userAgent = inp['user_agent']
     callerId = inp['caller_id']
     privateKey = inp['private_key']
     query = inp['query']
 
-    def getJSONBooli(offset, limit):
-        timestamp = str(int(time.time()))
-        unique = ''.join(random.choice(string.ascii_lowercase + string.digits) for x in range(16))
-        toHash = callerId + timestamp + privateKey + unique
-        hashstr = sha1(toHash.encode('utf-8')).hexdigest()
+    offset = inp['offset']
+    limit = inp['limit']
 
-        o = urllib.parse.quote(query)
+    # genererar en hashad sträng
+    timestamp = str(int(time.time()))
+    unique = ''.join(random.choice(string.ascii_lowercase + string.digits) for x in range(16))
+    toHash = callerId + timestamp + privateKey + unique
+    hashstr = sha1(toHash.encode('utf-8')).hexdigest()
 
-        opener = urllib.request.build_opener()
-        opener.addheaders = [('User-agent', userAgent)]
+    # gör söksträngen mer servervänlig
+    query = urllib.parse.quote(query)
+    
+    # lägger till UA och hämtar JSON objektet
+    opener = urllib.request.build_opener()
+    opener.addheaders = [('User-agent', userAgent)]
 
-        url = "http://api.booli.se/sold?q=%s&callerId=%s&time=%s&unique=%s&hash=%s&limit=%d&offset=%d" % (o, callerId, timestamp, unique, hashstr, limit, offset)
+    url = "http://api.booli.se/sold?q=%s&callerId=%s&time=%s&unique=%s&hash=%s&limit=%d&offset=%d" % (query, callerId, timestamp, unique, hashstr, limit, offset)
 
-        resp = opener.open(url)
-        data = resp.read()
+    resp = opener.open(url)
+    data = resp.read()
 
-        ret = json.loads(data.decode('utf-8'))
-        return ret
+    # Behandlar rådata till 'python json'
+    ret = json.loads(data.decode('utf-8'))
+    return ret
+
+def getSoldObjects(inp):
+    userAgent = inp['user_agent']
+    callerId = inp['caller_id']
+    privateKey = inp['private_key']
+    query = inp['query']
 
     # HACK
 
@@ -46,34 +62,40 @@ def getSoldObjects(inp):
     # För att inte skämma ut oss, så bör vi kontrollera att den gör det den ska
     # först.
 
-
-    offsetNu = 0
+    offsetNow = 0
     limit = 500
-    ret = getJSONBooli(offsetNu, limit)
-    antalSkickade = ret['count']
 
-    if antalSkickade == 0:
+    paramsToFunc = inp.copy()
+    paramsToFunc['offset'] = offsetNow
+    paramsToFunc['limit'] = limit
+
+    json = getJSONFromBooli(paramsToFunc)
+    numSent = json['count']
+
+    if numSent == 0:
         print("Inga resultat.")
         exit()
 
-    print( str(ret['totalCount']) + " från " + query + " kommer att sparas" )
-    # input()
+    print( str(json['totalCount']) + " från " + query + " kommer att sparas" )
 
-    temp = ret['sold']
+    # TODO: Kontrollera om det är möjligt att få ut annat än sålda bostäder...
+    ret = json['sold']
 
-    while (offsetNu + antalSkickade + 1) < ret['totalCount']:
-        if (offsetNu + limit + antalSkickade + 1) > ret['totalCount']:
-            print(str(ret['totalCount']) + " av "+  str(ret['totalCount']))
+    while (offsetNow + numSent + 1) < json['totalCount']:
+        if (offsetNow + limit + numSent + 1) > json['totalCount']:
+            print(str(json['totalCount']) + " av "+  str(json['totalCount']))
         else:
-            print(str(offsetNu + limit) + " av " + str(ret['totalCount']))
+            print(str(offsetNow + limit) + " av " + str(json['totalCount']))
 
-        ret = getJSONBooli(offsetNu + antalSkickade + 1, limit)
-        temp.extend(ret['sold'])
-        offsetNu += limit
+        paramsToFunc['offset'] = offsetNow + numSent + 1
+        json = getJSONFromBooli(paramsToFunc)
+
+        ret.extend(json['sold'])
+        offsetNow += limit
 
         time.sleep(0.5)
 
-    return temp
+    return ret 
 
 def retrievePrivateKey(filepath):
     # TODO: Kontroll om denna existerar?
@@ -94,13 +116,17 @@ def makeStringValid(string):
 
 
 def main():
-    print("Skriv in din söksträng:")
-    query = input().strip('\n')
+    print("Skriv in din söksträng (ex: Stockholms Län):")
+    query = ""
+    while query == "":
+        query = input().strip('\n')
+        if query == "":
+            print("Du måste skriva in någonting. Försök igen.")
+
     fileQuery = makeStringValid(query)
-    
     filename = "booli-såld-" + fileQuery + ".json"
 
-    print("Programmet lever! Allt data kommer att sparas till %s" % filename)
+    print("OK. Allt data kommer att sparas till %s" % filename)
     
     privKey = retrievePrivateKey('BooliAPIKey')
     searchParam = {'user_agent' : 'Blubb/1.0',
