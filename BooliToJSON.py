@@ -18,7 +18,7 @@ import random
 import string
 import json
 
-def getJSONFromBooli(inp):
+def getSoldJSONFromBooli(inp):
     # döper om indata..
     userAgent = inp['user_agent']
     callerId = inp['caller_id']
@@ -69,7 +69,7 @@ def getSoldObjects(inp):
     paramsToFunc['offset'] = offsetNow
     paramsToFunc['limit'] = limit
 
-    json = getJSONFromBooli(paramsToFunc)
+    json = getSoldJSONFromBooli(paramsToFunc)
     numSent = json['count']
 
     if numSent == 0:
@@ -88,7 +88,7 @@ def getSoldObjects(inp):
             print(str(offsetNow + limit) + " av " + str(json['totalCount']))
 
         paramsToFunc['offset'] = offsetNow + numSent + 1
-        json = getJSONFromBooli(paramsToFunc)
+        json = getSoldJSONFromBooli(paramsToFunc)
 
         ret.extend(json['sold'])
         offsetNow += limit
