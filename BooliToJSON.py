@@ -9,6 +9,9 @@ Licenserad med 'MIT Licence'. Se bilagan 'LICENCE' för mer information vad det
 innebär.
 """
 
+# "Always code as if the guy who ends up maintaining your code will be a violent
+# psychopath who knows where you live."
+
 from hashlib import sha1
 
 import urllib.request
@@ -74,7 +77,7 @@ def getSoldObjects(inp):
 
     if numSent == 0:
         print("Inga resultat.")
-        exit()
+        return []
 
     print( str(json['totalCount']) + " från " + query + " kommer att sparas" )
 
@@ -114,6 +117,24 @@ def makeStringValid(string):
             ret += s
     return ret
 
+def search(query):
+    import os.path
+    if os.path.isfile("booli-cache-" + query + ".json"):
+        with open("booli-cache-" + query + ".json") as data_file:
+            return json.load(data_file)
+    else:
+        privKey = retrievePrivateKey('BooliAPIKey')
+        searchParam = {'user_agent' : 'Blubb/1.0',
+                'caller_id' : 'Blubb',
+                'private_key' : privKey,
+                'query' : query }
+        ret = getSoldObjects(searchParam)
+
+        filename = "booli-cache-" + query + ".json"
+        with open(filename, 'w') as outfile:
+            json.dump(ret, outfile)
+
+        return ret
 
 def main():
     print("Skriv in din söksträng (ex: Stockholms Län):")
