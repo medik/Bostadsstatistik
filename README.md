@@ -4,7 +4,7 @@ In this git repository you will find scripts that I've created to analyse the sw
 
 *BooliToJSON.py* is a script that takes a search parameter and forwarding it to Booli. Booli returns a search result that contains sold objects. This is then saved to file in JSON format.
 
-*JSONtoCSV.py* is used to convert the data created by BooliToJSON.py to CSV. The reason behind creating that it is easy to import the data to MATLAB. However, this script was written in a hurry and probably needs a rewrite with e.g. the python library Pandas.
+*JSONtoCSV.py* is used to convert the data created by BooliToJSON.py to CSV. The reason behind creating this is that it is easy to import CSV data to MATLAB. However, this script was written in a hurry and probably needs a rewrite with e.g. the python library Pandas.
 
 
 ## License
